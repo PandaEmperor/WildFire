@@ -1,23 +1,27 @@
-import csv
-import heapq
-from datetime import datetime, timedelta
+import csv # used to manipulate the csv files
+import heapq #men we love trees, used for the priority q
+from datetime import datetime, timedelta # datetime managment
+
+
+#The class fire is the main Object that represent the wildfire
 
 class Fire:
     _id_counter_ = 0
-    def __init__(self, timestamp, fire_start_time, severity,position):
-        Fire._id_counter_ += 1
-        self.timestamp = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
-        self.fire_start_time = datetime.strptime(fire_start_time, "%Y-%m-%dT%H:%M:%S")
-        self.severity = severity
-        self.position = position
-        self.crew = None
-        self.ID = Fire._id_counter_
-        self.mission_completion_time = None  # Initialize to None
+    def __init__(self, timestamp, fire_start_time, severity,position): #main constrocter
+        Fire._id_counter_ += 1 # keep track of uniue number for new id
+        self.timestamp = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S") #given attribute
+        self.fire_start_time = datetime.strptime(fire_start_time, "%Y-%m-%dT%H:%M:%S") #given attribute
+        self.severity = severity#given attribute
+        self.position = position#given attribute
+        self.crew = None #which crews it was given
+        self.ID = Fire._id_counter_ # its id
+        self.mission_completion_time = None  # When will the crew end
 
-    def __repr__(self):
+    def __repr__(self): # printing the attribute
         return (f"Fire(timestamp={self.timestamp}, fire_start_time={self.fire_start_time}, "
                 f"severity={self.severity}, latitude={self.latitude}, longitude={self.longitude})")
 
+#Overloading the comparator based on the severity
     def __lt__(self, other):
         return self.severity < other.severity
 
@@ -36,24 +40,25 @@ class Fire:
     def __ge__(self, other):
         return self.severity >= other.severit
 
-
+#priority q that has low severity at it is root and high at it leaf
 class FirePriorityQueue:
     def __init__(self):
         self.heap = []
 
+#function to add new object to the tree
     def add_fire(self, fire):
         # Use severity directly for min-heap behavior
         heapq.heappush(self.heap, (fire.severity, fire))
-
+#function that is = to root.pop()
     def get_next_fire(self): #CUT THE HEAD MEN
 
         if self.heap:
             return heapq.heappop(self.heap)[1]  # Return the Fire object
         return None
-
+#check if the tree is empty, return boolian
     def is_empty(self):
         return len(self.heap) == 0
-
+#remove a fire object from the tree based on the id
     def remove(self, fire_id):
         # Find the index of the fire with the given ID
         for index, (severity, fire) in enumerate(self.heap):
@@ -65,26 +70,28 @@ class FirePriorityQueue:
                     heapq._siftup(self.heap, index)  # Restore heap property
                     heapq._siftdown(self.heap, 0, index)  # Restore heap property
                 return  # Exit after removing the fire
-
+#iterate over the tree that return tulips. TULIPS are stupid
     def iterate(self):
         """Iterate through the heap one by one without modifying it."""
         for fire in self.heap:
             yield fire  # Use a generator to yield each fire object
-
+# the main class to discribe the available option
 class Crew:
     def __init__(self, name, deployment_time, cost_per_operation, units_available):
         self.name = name
         self.deployment_time = deployment_time  # in minutes
         self.cost_per_operation = cost_per_operation  # in dollars
-        self.units_available = units_available
+        self.units_available = units_available # this number will vary depends on the current
 
         self.total_units = units_available  # Initialize to the same number as units available
 
+# function to determine the most important factor, we optimised based on the result
     @property
     def cost_per_minute(self):
         # Calculate cost per minute of deployment time
         return self.cost_per_operation / self.deployment_time
 
+#update the fire object completion time to keep track of the crew
     def set_mission_completion_time(self, completion_time):
         """Set the mission completion time."""
         self.mission_completion_time = completion_time
@@ -92,7 +99,7 @@ class Crew:
     def get_mission_completion_time(self):
         """Get the mission completion time."""
         return self.mission_completion_time
-
+#function to print the attributes
     def __str__(self):
         return (f"{self.name}: "
                 f"Deployment Time: {self.deployment_time} minutes, "
@@ -102,6 +109,8 @@ class Crew:
                 f"Mission Completion Time: {self.mission_completion_time}, "
                 f"Cost per Minute: ${self.cost_per_minute:.2f}")
 
+
+#convert String to number, for the severity
 def severity_level(input_str):
     """
     Returns an integer based on the severity level.
@@ -119,7 +128,7 @@ def severity_level(input_str):
         return 2
     else:
         return None  # Return None for invalid input
-
+# the reverse of the function severity_levep()
 def severity_string(level):
     """
     Returns a string based on the severity level.
@@ -137,7 +146,7 @@ def severity_string(level):
     else:
         return None  # Return None for invalid input
 
-
+# converting time to an unified format
 def convert_timestamp_format(timestamp):
     """
     Convert a timestamp from '%Y-%m-%d %H:%M:%S' to '%Y-%m-%dT%H:%M:%S'.
@@ -151,7 +160,7 @@ def convert_timestamp_format(timestamp):
     # Replace the space with 'T'
     return timestamp.replace(" ", "T")
 
-
+#function that read the csv file and create object fire and return array fires
 def read_fires_from_csv(file_path):
     fires = []
     with open(file_path, mode='r') as file:
@@ -209,14 +218,14 @@ def Damage_Costs_for_Missed_Responses(input_number):
         return 200000
     else:
         return None  # Return None for invalid input
-
+#function to return crews in priority based on the crew_array order
 def find_available_crew(crews):
     for crew in crews:
         if crew.units_available > 0:
             crew.units_available -= 1# Decrement the available units
             return crew
     return None
-
+#convert crew name to int to use as index
 def crew_type_index(crew_type):
     if crew_type == "Fire Engines":
         return 0
@@ -230,7 +239,7 @@ def crew_type_index(crew_type):
         return 4
     else:
         return None  # Return None for unrecognized input
-# Example usage
+# main function
 if __name__ == "__main__":
 
     total_operation_cost =0
@@ -264,7 +273,7 @@ if __name__ == "__main__":
                     addressed_fires+=1
                     fire_type[update.severity] += 1
 
-
+#       find the chpeapest crew available
         crewx = find_available_crew(crew_array)
         if crewx is not None:
             fyre.crew = crew_type_index(crewx.name)
@@ -282,7 +291,7 @@ if __name__ == "__main__":
                 else:
                     delayed_fires += 1
                     fire_type[fyre.severity] += 1
-
+#Empty the q at the end
     if not (fire_queue.is_empty()):
         for severity, update in fire_queue.iterate():  # Unpack the tuple here
             temp = fire_queue.get_next_fire()
